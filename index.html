@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#091321">
+  <title>Tasmota reset-timer • 7 keer spanning</title>
+  <style>
+    :root{color-scheme:dark;--bg:#091321;--panel:#111f33;--line:#2a3a50;--txt:#f4f7fc;--muted:#a4b4ca;--accent:#6ec9ff;--on:#46dfac;--off:#ff816e}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100svh;background:radial-gradient(circle at 50% -15%,#1b3a58 0%,#091321 52%);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--txt);display:flex;justify-content:center;padding:26px 16px 40px}
+    .app{width:min(100%,720px)}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+    .brand{display:flex;align-items:center;gap:12px}.logo{width:42px;height:42px;border-radius:13px;background:#213957;display:grid;place-items:center;color:#89d5ff;font-size:23px;font-weight:800}
+    h1{font-size:22px;line-height:1.1;letter-spacing:-.6px;margin:0} .sub{font-size:12px;color:var(--muted);margin-top:4px}
+    .badge{border:1px solid var(--line);border-radius:99px;padding:8px 11px;color:#b6c9de;font-size:12px;white-space:nowrap}
+    .main{background:linear-gradient(160deg,rgba(30,48,70,.95),rgba(15,27,45,.98));border:1px solid #35465b;border-radius:26px;padding:24px 26px 28px;box-shadow:0 25px 65px rgba(0,0,0,.21);position:relative;overflow:hidden;transition:border-color .2s}
+    .main.on{border-color:rgba(70,223,172,.60)} .main.off{border-color:rgba(255,129,110,.58)}
+    .statusline{display:flex;justify-content:space-between;gap:12px;align-items:center;color:#a7bfd9;font-size:12px;text-transform:uppercase;font-weight:800;letter-spacing:1.3px}
+    .state-chip{font-size:12px;letter-spacing:.4px;border-radius:100px;background:#25394e;padding:7px 12px;text-transform:none;color:#dce9fa}
+    .main.on .state-chip{background:#164937;color:#a8ffdc}.main.off .state-chip{background:#52312e;color:#ffd3cd}
+    .signal{text-align:center;margin-top:18px}
+    .command{font-size:clamp(40px,9vw,68px);font-weight:900;letter-spacing:-2px;line-height:1.16;color:var(--off);transition:color .16s}
+    .main.on .command{color:var(--on)}
+    .instruction{font-size:clamp(14px,3vw,17px);line-height:1.5;color:#d3deeb;min-height:26px;margin:9px auto 6px;max-width:500px}
+    .clock{width:242px;height:242px;position:relative;margin:12px auto 13px}
+    .ring{width:100%;height:100%;transform:rotate(-90deg)} .track{fill:none;stroke:#2c4058;stroke-width:12}.arc{fill:none;stroke:var(--off);stroke-width:12;stroke-linecap:round;transition:stroke .2s}
+    .main.on .arc{stroke:var(--on)}
+    .count-inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column}
+    .count{font-variant-numeric:tabular-nums;font-weight:850;letter-spacing:-3px;line-height:1;font-size:76px}
+    .unit{font-size:14px;color:#b3c3d5;letter-spacing:.3px;margin-top:5px}
+    .timeline-label{display:flex;align-items:center;justify-content:space-between;margin-top:4px;color:var(--muted);font-size:12px;font-weight:600}
+    .overall{height:7px;border-radius:99px;background:#2c4057;overflow:hidden;margin-top:10px}.overall-fill{height:100%;width:0%;background:linear-gradient(90deg,#4cc3ff,#a3e5ff);border-radius:99px;transition:width .08s linear}
+    .rounds-title{font-size:11px;text-transform:uppercase;letter-spacing:1.1px;font-weight:800;color:#a4b9d0;margin:25px 0 12px}
+    .rounds{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+    .round{height:48px;border:1px solid #354c65;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#879db8;font-weight:800;font-variant-numeric:tabular-nums;font-size:16px;transition:all .1s}
+    .round.active{background:#2b4662;border-color:#8bd8ff;color:white;box-shadow:0 0 0 1px #8bd8ff inset}.round.done{border-color:#236955;background:#194438;color:#92f5cb}
+    .controls{display:flex;gap:10px;margin-top:20px}.btn{border:0;border-radius:15px;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer;min-height:55px;padding:12px 17px;transition:transform .1s,opacity .1s}
+    .btn:active{transform:scale(.98)}.primary{background:#a1e1ff;color:#061421;flex:1}.primary:disabled{opacity:.45;cursor:not-allowed}.secondary{background:#263a53;color:#e1eaf5;border:1px solid #3e536d}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:13px}.tool{border:1px solid #354960;background:transparent;color:#b8cce2;border-radius:10px;padding:9px 13px;cursor:pointer;font-family:inherit;font-size:13px;min-height:39px}
+    .note{margin-top:18px;background:#152338;border:1px solid #293e58;border-radius:15px;padding:15px 17px;color:#c5d3e3;font-size:13px;line-height:1.55}
+    .note strong{color:#e7f4ff}.note a{color:#92dafa}
+    .toast{color:#ffd6a9;font-size:12px;min-height:18px;text-align:center;margin:7px 0 0}
+    .foot{text-align:center;color:#879ab4;font-size:11px;line-height:1.6;margin-top:18px}
+    @media(max-width:520px){body{padding:13px 10px 30px}.main{padding:21px 17px 24px;border-radius:22px}.clock{width:218px;height:218px;margin:12px auto}.count{font-size:70px}.round{height:44px}.top{margin:4px 3px 15px}h1{font-size:19px}.badge{font-size:11px;padding:7px 9px}.controls .secondary{padding-left:13px;padding-right:13px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="Interactieve timer voor Tasmota reset">
+    <div class="top">
+      <div class="brand"><div class="logo" aria-hidden="true">⏻</div><div><h1>Tasmota reset-timer</h1><div class="sub">Resetten via 7 keer spanning inschakelen</div></div></div>
+      <div class="badge">54 seconden</div>
+    </div>
+    <section class="main off" id="main">
+      <div class="statusline"><span id="phase">STAP 1 · VOORBEREIDING</span><span class="state-chip" id="chip">Klaar om te starten</span></div>
+      <div class="signal" aria-live="off"><div class="command" id="command">SPANNING UIT</div><div class="instruction" id="instruction">Haal de spanning eraf en druk op Start.</div></div>
+      <div class="clock" role="timer" aria-label="Resterende tijd"><svg class="ring" viewBox="0 0 240 240" aria-hidden="true"><circle class="track" cx="120" cy="120" r="100"></circle><circle class="arc" id="arc" cx="120" cy="120" r="100" stroke-dasharray="628.3185" stroke-dashoffset="0"></circle></svg><div class="count-inner"><div class="count" id="count">30</div><div class="unit" id="unit">seconden</div></div></div>
+      <div class="timeline-label"><span id="stepText">Eerst 30 sec UIT · daarna 6× AAN/UIT</span><span id="remaining">0:54 totaal</span></div>
+      <div class="overall"><div class="overall-fill" id="overall" role="progressbar" aria-label="Voortgang resetprocedure" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
+      <div class="rounds-title">6 korte schakelrondes</div>
+      <div class="rounds" id="rounds" aria-label="Schakelrondes"><div class="round">1</div><div class="round">2</div><div class="round">3</div><div class="round">4</div><div class="round">5</div><div class="round">6</div></div>
+      <div class="controls"><button class="btn primary" id="start" type="button">▶ Start timer</button><button class="btn secondary" id="reset" type="button">↺ Opnieuw</button></div>
+      <div class="toolbar"><button class="tool" id="sound" type="button" aria-pressed="true">♪ Geluid aan</button><button class="tool" id="fullscreen" type="button">⛶ Volledig scherm</button></div>
+      <div class="toast" id="toast" role="status"></div>
+    </section>
+    <div class="note"><strong>Zo werkt het:</strong> eerst 30 seconden zonder spanning. Daarna 6 rondes van 2 seconden AAN en 2 seconden UIT. Bij de <strong>7e keer AAN</strong> laat je de spanning aanstaan. De timer geeft piepjes bij iedere wisseling, maar schakelt niets zelf.</div>
+    <div class="foot">Schakel uitsluitend via een veilige schakelaar of stekker, nooit via blootliggende netspanningsdraden.<br><a href="https://tasmota.github.io/docs/Device-Recovery/" target="_blank" rel="noopener noreferrer" style="color:#86c9f8">Tasmota: Fast Power Cycle Device Recovery</a> · Vereist SetOption65 0</div>
+  </main>
+<script>
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const totalMs=54000, phases=[{on:false,ms:30000,round:0,label:'Voorbereiding',description:'Houd de spanning 30 seconden UIT.'}];
+  for(let n=1;n<=6;n++){
+    phases.push({on:true,ms:2000,round:n,label:'Ronde '+n+' van 6',description:'Zet de spanning nu AAN.'});
+    phases.push({on:false,ms:2000,round:n,label:'Ronde '+n+' van 6',description:'Zet de spanning nu UIT.'});
+  }
+  phases.push({on:true,ms:0,round:7,label:'7e inschakeling',description:'Zet de spanning AAN en laat deze AAN staan.',final:true});
+  const circumference=2*Math.PI*100;
+  const rounds=[...document.querySelectorAll('.round')];
+  let elapsed=0, startedAt=0, running=false, previousPhase=-1, audioEnabled=true, audioCtx=null, raf=0, finished=false;
+  const formatTime=ms=>{const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+  function currentMs(){return Math.min(totalMs,elapsed+(running?(performance.now()-startedAt):0))}
+  function getPhase(ms){let past=0;for(let i=0;i<phases.length-1;i++){const p=phases[i];if(ms<past+p.ms)return {i,phase:p,within:ms-past};past+=p.ms}return {i:phases.length-1,phase:phases.at(-1),within:0}}
+  function beep(on,complete){if(!audioEnabled)return;try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;audioCtx=audioCtx||new AC();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});const t=audioCtx.currentTime;const freq=complete?1030:on?880:500;const count=complete?3:1;for(let n=0;n<count;n++){const osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),at=t+n*.18;osc.type='sine';osc.frequency.value=freq;gain.gain.setValueAtTime(.001,at);gain.gain.exponentialRampToValueAtTime(.16,at+.012);gain.gain.exponentialRampToValueAtTime(.001,at+.12);osc.connect(gain);gain.connect(audioCtx.destination);osc.start(at);osc.stop(at+.13)}}catch(e){/* Audio is optional */}}
+  function render(force=false){
+    const ms=currentMs();const {i,phase:p,within}=getPhase(ms);
+    if(i!==previousPhase||force){
+      const changed=i!==previousPhase;
+      $('main').classList.toggle('on',p.on);$('main').classList.toggle('off',!p.on);
+      $('phase').textContent=p.final?'STAP 3 · VOLTOOIEN':p.round===0?'STAP 1 · VOORBEREIDING':'STAP 2 · '+p.label.toUpperCase();
+      $('command').textContent=p.final?'AAN LATEN STAAN':p.on?'SPANNING AAN':'SPANNING UIT';
+      $('instruction').textContent=(p.round===0&&!running&&ms===0)?'Haal de spanning eraf en druk op Start.':p.description;
+      $('chip').textContent=p.final?'Klaar':!running&&ms===0?'Klaar om te starten':!running?'Gepauzeerd':p.round===0?'30 sec UIT':`Ronde ${p.round}/6`;
+      $('stepText').textContent=p.final?'7e keer AAN · laat zo staan':p.round===0?'30 seconden UIT · daarna 6× AAN/UIT':`Ronde ${p.round}/6 · ${p.on?'AAN':'UIT'} gedurende 2 seconden`;
+      $('unit').textContent=p.final?'reset activeren':p.ms===30000?'seconden':'seconden';
+      rounds.forEach((el,idx)=>{const n=idx+1;el.classList.toggle('active',!p.final&&p.round===n);el.classList.toggle('done',p.final||p.round>n);el.textContent=(p.final||p.round>n)?'✓':String(n)});
+      if(changed&&running&&previousPhase!==-1)beep(p.on,!!p.final);
+      previousPhase=i;
+    }
+    const left=Math.max(0,p.ms-within);
+    $('count').textContent=p.final?'✓':p.ms===30000?String(Math.ceil(left/1000)):(left/1000).toFixed(1);
+    $('arc').style.strokeDashoffset=String(circumference*(p.final?0:1-left/p.ms));
+    $('remaining').textContent=p.final?'Klaar!':formatTime(totalMs-ms)+' resterend';
+    const percent=Math.min(100,ms/totalMs*100);
+    $('overall').style.width=percent+'%';$('overall').setAttribute('aria-valuenow',String(Math.round(percent)));
+    if(p.final&&running){running=false;elapsed=totalMs;finished=true;$('start').textContent='✓ Voltooid';$('start').disabled=true;$('toast').textContent='Laat het apparaat aan staan. Tasmota kan nu opnieuw opstarten.'}
+    else if(running)raf=requestAnimationFrame(()=>render());
+  }
+  function startPause(){
+    if(finished)return;
+    if(running){elapsed=currentMs();running=false;cancelAnimationFrame(raf);$('start').textContent='▶ Hervatten';$('toast').textContent='Gepauzeerd · houd de huidige spanningstoestand aan.';render(true);return}
+    if(elapsed===0){previousPhase=-1;beep(false,false)}
+    running=true;startedAt=performance.now();$('start').textContent='Ⅱ Pauzeren';$('toast').textContent='';render(true);
+  }
+  function reset(){running=false;cancelAnimationFrame(raf);elapsed=0;finished=false;previousPhase=-1;$('start').textContent='▶ Start timer';$('start').disabled=false;$('toast').textContent='';render(true)}
+  $('start').addEventListener('click',startPause);
+  $('reset').addEventListener('click',reset);
+  $('sound').addEventListener('click',()=>{audioEnabled=!audioEnabled;$('sound').textContent=audioEnabled?'♪ Geluid aan':'♪ Geluid uit';$('sound').setAttribute('aria-pressed',String(audioEnabled));if(audioEnabled)beep(true,false)});
+  $('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement){await document.exitFullscreen()}else if(document.documentElement.requestFullscreen){await document.documentElement.requestFullscreen()}}catch(e){$('toast').textContent='Volledig scherm is niet beschikbaar in deze browser.'}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&running){elapsed=currentMs();running=false;cancelAnimationFrame(raf);$('start').textContent='▶ Hervatten';$('toast').textContent='Automatisch gepauzeerd omdat dit tabblad verborgen werd.';render(true)}});
+  render(true);
+})();
+</script>
+</body>
+</html>
